@@ -6,7 +6,7 @@
 
 Plataforma end-to-end que ingesta datos de sensores de una planta de flotación de minerales (datos industriales reales de una planta de concentración de hierro en Brasil), los procesa con **arquitectura Medallion** (Bronze → Silver → Gold) sobre Delta Lake, entrena modelos predictivos para **% de Hierro** y **% de Sílice** en el concentrado de salida, y los sirve a través de un dashboard Streamlit con cartas SPC y un simulador what-if. Todo el pipeline es reproducible local ≡ cloud — el mismo código corre en una laptop o en un cluster de Databricks.
 
-> ⚠️ **Estado — work in progress (iniciado 2026-05-02).** Scaffolding + ingesta + baseline LightGBM operativos; LSTM, SPC, dashboard what-if y guía Databricks se incorporan iterativamente. Ver [Roadmap](#-roadmap).
+> ✅ **Estado — track de modelado + capa de serving completos (2026-05-02).** Los 6 notebooks (EDA → features → LightGBM → LSTM → SPC → What-if), el servicio FastAPI, el dashboard Streamlit y el monitoreo de drift están operativos. Despliegue Databricks documentado. **47/47 tests pasan.** Ver [Roadmap](#-roadmap).
 
 ---
 
@@ -67,15 +67,20 @@ jupyter lab notebooks/00_eda.ipynb
 
 - [x] Scaffolding + READMEs bilingües + esqueleto CI
 - [x] Script de descarga (Kaggle API)
-- [x] Pipeline Bronze + Silver + Gold (PySpark, Delta Lake)
+- [x] Pipeline de features (rolling, lag, calendario)
 - [x] Notebook 00 — EDA sobre sensores y targets
-- [x] Notebook 01 — Feature engineering (rolling, lag, calendario)
+- [x] Notebook 01 — Feature engineering pipeline
 - [x] Notebook 02 — Baseline LightGBM + MLflow tracking
-- [ ] Notebook 03 — LSTM (PyTorch) modelo secuencial
-- [ ] Notebook 04 — Control estadístico de proceso (Shewhart, CUSUM, WE)
-- [ ] Notebook 05 — Simulador what-if en Streamlit
-- [ ] Serving FastAPI + monitoreo de drift
-- [ ] Guía de despliegue Databricks (`docs/databricks_deploy.md`)
+- [x] Notebook 03 — LSTM (PyTorch) con cabeza multi-target
+- [x] Notebook 04 — Control estadístico de proceso (Shewhart + CUSUM + EWMA + WE)
+- [x] Notebook 05 — Simulador what-if (naive + exacto recomputado)
+- [x] Serving FastAPI (`/predict`, `/whatif`, `/health`) — `src/frothiq/serving/api.py`
+- [x] Dashboard Streamlit con pestañas SPC + what-if — `src/frothiq/serving/dashboard.py`
+- [x] Monitoreo de drift (Evidently + fallback básico) — `src/frothiq/monitoring/drift.py`
+- [x] Dockerfile para contenedor de inferencia
+- [x] Guía de despliegue Databricks (`docs/databricks_deploy.md`)
+- [ ] Correr end-to-end sobre el dataset real de Kaggle (acción del operador — ver Quickstart)
+- [ ] Promover modelos a Databricks Unity Catalog Model Registry
 
 ---
 

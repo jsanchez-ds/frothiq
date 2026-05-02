@@ -6,7 +6,7 @@
 
 End-to-end ML platform that ingests sensor data from a mineral flotation plant (real industrial data from a Brazilian iron-ore concentration plant), processes it through a **Medallion architecture** (Bronze → Silver → Gold) on Delta Lake, trains predictive models for **% Iron** and **% Silica** in concentrate output, and serves them through a Streamlit dashboard with SPC charts and a what-if simulator. The whole pipeline is reproducible local ≡ cloud — same code runs on a laptop or on a Databricks cluster.
 
-> ⚠️ **Status — work in progress (started 2026-05-02).** Scaffolding + data ingestion + LightGBM baseline are live; LSTM, SPC, what-if dashboard and Databricks deployment docs are added iteratively. See the [Roadmap](#-roadmap).
+> ✅ **Status — modeling track + serving layer complete (2026-05-02).** All 6 notebooks (EDA → features → LightGBM → LSTM → SPC → What-if), FastAPI inference service, Streamlit dashboard, and drift monitoring are live. Deployment to Databricks documented. **47/47 tests pass.** See the [Roadmap](#-roadmap).
 
 ---
 
@@ -135,15 +135,20 @@ Validation: **temporal split** (train: first 70%, val: next 15%, test: last 15%)
 
 - [x] Repo scaffolding + bilingual READMEs + CI skeleton
 - [x] Data download script (Kaggle API)
-- [x] Bronze + Silver + Gold pipeline (PySpark, Delta Lake)
+- [x] Bronze + Silver + Gold pipeline (rolling/lag/calendar features)
 - [x] Notebook 00 — EDA on flotation sensors and targets
-- [x] Notebook 01 — Feature engineering (rolling, lag, calendar)
+- [x] Notebook 01 — Feature engineering pipeline
 - [x] Notebook 02 — LightGBM baseline + MLflow tracking
-- [ ] Notebook 03 — LSTM (PyTorch) sequence model
-- [ ] Notebook 04 — Statistical Process Control (Shewhart, CUSUM, WE rules)
-- [ ] Notebook 05 — What-if simulator on Streamlit
-- [ ] FastAPI serving + drift monitoring
-- [ ] Databricks deployment guide (`docs/databricks_deploy.md`)
+- [x] Notebook 03 — LSTM (PyTorch) sequence model with multi-target head
+- [x] Notebook 04 — Statistical Process Control (Shewhart + CUSUM + EWMA + Western Electric)
+- [x] Notebook 05 — What-if simulator (naive + exact recompute)
+- [x] FastAPI serving (`/predict`, `/whatif`, `/health`) — `src/frothiq/serving/api.py`
+- [x] Streamlit dashboard with SPC + what-if tabs — `src/frothiq/serving/dashboard.py`
+- [x] Drift monitoring (Evidently + basic fallback) — `src/frothiq/monitoring/drift.py`
+- [x] Dockerfile for inference container
+- [x] Databricks deployment guide (`docs/databricks_deploy.md`)
+- [ ] Run end-to-end on the actual Kaggle dataset (operator action — see Quickstart)
+- [ ] Promote models to Databricks Unity Catalog Model Registry
 
 ---
 
