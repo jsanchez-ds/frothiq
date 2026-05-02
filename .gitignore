@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Data (kept out of git — re-fetch via scripts/download_data.sh)
+data/raw/
+data/interim/
+data/processed/
+*.zip
+*.tar.gz
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# Model artifacts
+artifacts/*.pkl
+artifacts/*.pt
+artifacts/*.onnx
+
+# Kaggle credentials
+.kaggle/
+kaggle.json
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Coverage / cache
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+htmlcov/
+.coverage
+
+# Spark
+.metastore_db/
+metastore_db/
+derby.log
+spark-warehouse/

@@ -1,0 +1,81 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "frothiq"
+version = "0.1.0"
+description = "Mineral process quality forecasting on Databricks — flotation plant ML platform with SPC and what-if simulation."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Jonathan Sánchez Pesantes", email = "jonathan.sanchez.ep@gmail.com" }]
+keywords = ["mining", "flotation", "process-control", "spc", "mlops", "databricks", "predictive-quality"]
+classifiers = [
+  "Programming Language :: Python :: 3.11",
+  "License :: OSI Approved :: MIT License",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+  # Core data stack
+  "pandas>=2.2",
+  "numpy>=1.26",
+  "scipy>=1.13",
+  "scikit-learn>=1.5",
+
+  # Big data
+  "pyspark>=3.5",
+  "delta-spark>=3.0",
+
+  # Modeling
+  "lightgbm>=4.3",
+  "xgboost>=2.0",
+  "torch>=2.3",
+
+  # MLOps
+  "mlflow>=2.14",
+  "shap>=0.45",
+
+  # Serving / UI
+  "streamlit>=1.36",
+  "fastapi>=0.110",
+  "uvicorn>=0.27",
+  "plotly>=5.22",
+
+  # Data acquisition
+  "kaggle>=1.6",
+
+  # Utilities
+  "pyyaml>=6.0",
+  "tqdm>=4.66",
+  "rich>=13.7",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.2",
+  "pytest-cov>=5.0",
+  "ruff>=0.5",
+  "mypy>=1.10",
+  "jupyterlab>=4.2",
+  "ipykernel>=6.29",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM"]
+ignore = ["E501"]
+# Note: N (pep8-naming) intentionally excluded. Standard ML idiom uses
+# uppercase X_train, X_val, X_test for design matrices (X is uppercase
+# matrix, y is lowercase vector). Enforcing lowercase is non-idiomatic.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
