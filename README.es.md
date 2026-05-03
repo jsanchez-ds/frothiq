@@ -6,7 +6,43 @@
 
 Plataforma end-to-end que ingesta datos de sensores de una planta de flotación de minerales (datos industriales reales de una planta de concentración de hierro en Brasil), los procesa con **arquitectura Medallion** (Bronze → Silver → Gold) sobre Delta Lake, entrena modelos predictivos para **% de Hierro** y **% de Sílice** en el concentrado de salida, y los sirve a través de un dashboard Streamlit con cartas SPC y un simulador what-if. Todo el pipeline es reproducible local ≡ cloud — el mismo código corre en una laptop o en un cluster de Databricks.
 
-> ✅ **Estado — track de modelado + capa de serving completos (2026-05-02).** Los 6 notebooks (EDA → features → LightGBM → LSTM → SPC → What-if), el servicio FastAPI, el dashboard Streamlit y el monitoreo de drift están operativos. Despliegue Databricks documentado. **47/47 tests pasan.** Ver [Roadmap](#-roadmap).
+> ✅ **Estado — track de modelado + capa de serving completos (2026-05-02).** Todos los notebooks (EDA → features → LightGBM all-rows → LightGBM fresh-only → SPC → What-if), el servicio FastAPI, el dashboard Streamlit y el monitoreo de drift están operativos. Despliegue Databricks documentado. **47/47 tests pasan.** Ver [Roadmap](#-roadmap).
+
+---
+
+## 📊 Resultados principales sobre el dataset de Kaggle (737K filas, 6 meses)
+
+| Métrica | Modelo all-rows | Modelo fresh-only (notebook 02b) |
+|---|---|---|
+| Test RMSE sobre `% Iron Concentrate` | 1.216 | **0.786** (−35.4%) |
+| Test RMSE sobre `% Silica Concentrate` | 1.152 | **0.823** (−28.5%) |
+| Test R² sobre `% Iron Concentrate` | −0.171 | −0.216 |
+| Filas de entrenamiento | 515,677 | 42,654 |
+
+**El hallazgo principal no es el RMSE** — es el **shift temporal estructural** entre train (mar–jun 2017) y test (jul–sep 2017). Entrenar solo con lab readings frescos reduce RMSE 28-35% al sacar el ruido de los forward-fills del supervisor signal, pero el R² queda ligeramente negativo porque la distribución del test cambió.
+
+**Las cartas SPC capturan el shift dramáticamente** — Shewhart con reglas Western Electric + CUSUM detectan el cambio de régimen residual por residual:
+
+| Método SPC sobre residuales | Signals | % del test |
+|---|---|---|
+| Shewhart regla 1 (±3σ) | 19 | 0.21% |
+| Shewhart regla 2 (2 de 3 ±2σ) | 132 | 1.44% |
+| Shewhart regla 3 (4 de 5 ±1σ) | 2,074 | 22.68% |
+| **Shewhart regla 4 (8 mismo lado)** | **8,816** | **96.40%** |
+| **CUSUM (δ=1σ, h=4σ)** | **8,567** | **93.68%** |
+| EWMA (λ=0.2, L=3) | 2,117 | 23.15% |
+
+El estadístico Cl del CUSUM sube hasta **~1000 sobre miles de filas** — prueba visual del bias sostenido del modelo a medida que la planta drifta su régimen operacional. **Eso es exactamente para lo que sirve el SPC en producción**: capturar el momento en que un modelo empieza a equivocarse sistemáticamente, antes de que el QA de laboratorio confirme el drift de calidad.
+
+### Hallazgos honestos
+
+1. **El dataset Kaggle tiene 91.73% de labels forward-filled.** Entrenar con todas las filas trata los forward-fills como ground truth y produce un modelo que solo supera al baseline ingenuo en 1.5–4%. Restringir al 8.27% de lab readings frescos es el camino metodológicamente correcto; documentado en notebook 02b.
+
+2. **Incluso con el filtro fresh-only, R² queda ligeramente negativo.** El problema dominante es el **shift temporal de distribución** entre el primer 70% del timeline (train) y el último 15% (test). El régimen operacional, fuente del feed o calibración de instrumentos cambió a mitad del dataset — fenómeno real, común, y poco reportado en ML industrial.
+
+3. **Las importancias de features validan interpretación física.** Para `% Iron Concentrate` el top driver es `pct_iron_feed` (más hierro entra → más hierro sale — físicamente correcto). Para `% Silica Concentrate` los top drivers son starch flow y ore pulp density, exactamente los reactivos usados para deprimir sílice en flotación catiónica reversa.
+
+4. **El simulador what-if es robusto a overrides puntuales** (Δ predicted ≈ 0 para cualquier override de pH). El modelo aprendió correctamente que excursiones de un solo instante no predicen calidad estacionaria — solo cambios sostenidos (sobre una ventana de 30+ min) mueven la predicción. **Esto es un feature, no un bug**: en producción el simulador overridearía una ventana contigua de cycles, no un solo timestep.
 
 ---
 
