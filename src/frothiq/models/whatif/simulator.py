@@ -138,11 +138,13 @@ def simulate_whatif_naive(
     overrides: dict[str, float],
 ) -> WhatIfResult:
     """Naive what-if: O(1) — fast, approximate."""
-    X_base = feature_row[feature_cols].to_frame().T
+    # Cast to float64 because converting a heterogeneous pd.Series to DataFrame
+    # via .to_frame().T leaves columns as 'object' dtype, which LightGBM rejects.
+    X_base = feature_row[feature_cols].to_frame().T.astype("float64")
     baseline_pred = np.asarray(model.predict(X_base)).reshape(-1)
 
     modified = apply_overrides_naive(feature_row, overrides)
-    X_cf = modified[feature_cols].to_frame().T
+    X_cf = modified[feature_cols].to_frame().T.astype("float64")
     counterfactual_pred = np.asarray(model.predict(X_cf)).reshape(-1)
 
     return WhatIfResult(
@@ -168,14 +170,14 @@ def simulate_whatif_exact(
         recent_window, sensor_cols, feature_cols, overrides={},
         rolling_windows=rolling_windows, lag_steps=lag_steps, timestamp_col=timestamp_col,
     )
-    X_base = base_row.to_frame().T
+    X_base = base_row.to_frame().T.astype("float64")
     baseline_pred = np.asarray(model.predict(X_base)).reshape(-1)
 
     cf_row = apply_overrides_exact(
         recent_window, sensor_cols, feature_cols, overrides=overrides,
         rolling_windows=rolling_windows, lag_steps=lag_steps, timestamp_col=timestamp_col,
     )
-    X_cf = cf_row.to_frame().T
+    X_cf = cf_row.to_frame().T.astype("float64")
     counterfactual_pred = np.asarray(model.predict(X_cf)).reshape(-1)
 
     return WhatIfResult(
